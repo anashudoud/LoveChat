@@ -2,200 +2,132 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Private Love Chat</title>
-  <link rel="manifest" href="/manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <title>LoveChat ✨</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
-  <!-- شاشة الدخول -->
-  <div class="login" id="loginScreen">
-    <h2>💬 Private Chat</h2>
-    <input type="text" id="username" placeholder="اسمك..." autocomplete="off">
-    <button onclick="login()">دخول</button>
-  </div>
+  <!-- 🌌 خلفيات متحركة -->
+  <div class="bg-layer"></div>
+  <div class="bg-orbs"></div>
 
-  <!-- شاشة الشات -->
-  <div class="chat" id="chatScreen" style="display:none;">
-    <div class="header">
-      <span>💻 Chat Room</span>
-      <div class="call-controls">
-        <button onclick="startCall('audio')" class="call-btn">📞</button>
-        <button onclick="startCall('video')" class="call-btn">📹</button>
-        <span id="status">● Online</span>
+  <!-- 🔐 شاشة الدخول -->
+  <section id="auth-screen" class="screen active">
+    <div class="glass-card auth-box">
+      <div class="logo">💬</div>
+      <h1>LoveChat</h1>
+      <p class="sub">مساحة المحادثة الآمنة</p>
+      
+      <!-- ✅ نموذج الدخول المصحح -->
+      <form id="login-form">
+        <div class="field">
+          <label>اسم المستخدم</label>
+          <input type="text" id="username" placeholder="مثال: خالد" required autocomplete="username">
+        </div>
+        <div class="field">
+          <label>كلمة المرور (اختياري)</label>
+          <input type="password" id="password" placeholder="••••••" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn primary">دخول آمن 🔓</button>
+      </form>
+      
+      <p class="hint">✨ لا يحتاج تسجيل مسبق • أي اسم يعمل</p>
+    </div>
+  </section>
+
+  <!-- 💬 الشاشة الرئيسية -->
+  <section id="chat-screen" class="screen">
+    <aside class="sidebar glass" id="sidebar">
+      <div class="header">
+        <div class="profile">
+          <img id="my-av" class="av" src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff" alt="avatar">
+          <div>
+            <span id="my-name" class="name">زائر</span>
+            <span class="st online">● متصل</span>
+          </div>
+        </div>
+        <button class="icon" id="logout-btn" title="خروج">🚪</button>
+      </div>
+      
+      <div class="search">
+        <input type="text" id="search" placeholder="🔍 بحث...">
+      </div>
+      
+      <div id="ulist" class="list">
+        <!-- سيتم ملؤها تلقائياً بالجافاسكريبت -->
+      </div>
+    </aside>
+
+    <main class="chat glass" id="chat">
+      <header class="c-header">
+        <button class="icon back" id="back-btn" title="رجوع">←</button>
+        <img id="c-av" class="av" src="https://ui-avatars.com/api/?name=Chat&background=ec4899&color=fff" alt="chat">
+        <div class="info">
+          <h2 id="c-name">اختر محادثة</h2>
+          <span id="c-st" class="st">جاهز</span>
+        </div>
+        <div class="acts">
+          <button class="icon call" id="call-audio" title="مكالسة صوتية">📞</button>
+          <button class="icon call" id="call-video" title="مكالسة مرئية">📹</button>
+        </div>
+      </header>
+      
+      <div id="msgs" class="msgs">
+        <div class="empty">💬 لا توجد رسائل بعد</div>
+      </div>
+      
+      <footer class="input">
+        <button class="act" id="att" title="صورة/فيديو">📷</button>
+        <button class="act" id="mic" title="تسجيل صوتي (اضغط مطولاً)">🎤</button>
+        <input type="text" id="txt" placeholder="اكتب رسالتك..." autocomplete="off">
+        <button class="send" id="snd">➤</button>
+        <input type="file" id="file" accept="image/*,video/*" hidden>
+      </footer>
+    </main>
+  </section>
+
+  <!-- 📞 شاشة المكالسة -->
+  <section id="call-screen" class="screen overlay">
+    <div class="call-wrap">
+      <video id="rem" autoplay playsinline></video>
+      <video id="loc" autoplay playsinline muted class="pip"></video>
+      <div class="c-info">
+        <img id="call-av" class="av lg" src="" alt="caller">
+        <h3 id="call-nm">جارٍ الاتصال...</h3>
+        <span id="call-st" class="tag">يرجى الانتظار</span>
+      </div>
+      <div class="ctrls">
+        <button class="btn ctrl" id="mute-btn">🔊</button>
+        <button class="btn ctrl" id="cam-btn" style="display:none">🔄</button>
+        <button class="btn danger" id="end-call-btn">📞</button>
       </div>
     </div>
-    <div class="typing" id="typing"></div>
-    <div class="messages" id="messages"></div>
-    <div class="input-box">
-      <input type="text" id="msgInput" placeholder="اكتب رسالة..." onkeydown="if(event.key==='Enter')sendMessage()">
-      <button onclick="sendMessage()">➤</button>
-      <label class="file-label">📷<input type="file" id="imgInput" accept="image/*" onchange="uploadImage()" style="display:none;"></label>
+  </section>
+
+  <!-- 🔔 نافذة المكالسة الواردة -->
+  <div id="inc-modal" class="modal hidden">
+    <div class="glass-box">
+      <div class="pulse-ring"></div>
+      <img id="inc-av" class="av lg" src="https://ui-avatars.com/api/?name=Caller&background=ec4899&color=fff" alt="caller">
+      <h3 id="inc-nm">مكالسة واردة</h3>
+      <span id="inc-type" class="tag">📞 صوتية</span>
+      <div class="m-acts">
+        <button class="btn reject" id="reject-btn">❌ رفض</button>
+        <button class="btn accept" id="accept-btn">✅ قبول</button>
+      </div>
     </div>
   </div>
 
-  <!-- واجهة المكالمة -->
-  <div class="call-ui" id="callUI" style="display:none;">
-    <video id="remoteVideo" autoplay playsinline></video>
-    <video id="localVideo" autoplay muted playsinline class="local-video"></video>
-    <button onclick="endCall()" class="end-call-btn">📞 إنهاء المكالمة</button>
-  </div>
-
-  <script src="/socket.io/socket.io.js"></script>
+  <!-- 🧠 ربط الجافاسكريبت -->
+  <script src="script.js"></script>
+  
+  <!-- 📱 تسجيل Service Worker (اختياري) -->
   <script>
-    const socket = io(); // سيتم تعديله لاحقاً لرابط Render
-    let myUsername = '';
-    let peerId = null;
-    let localStream = null;
-    let peerConnection = null;
-    const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-    // تسجيل الدخول
-    function login() {
-      const name = document.getElementById('username').value.trim();
-      if (!name) return alert('الرجاء إدخال اسمك');
-      myUsername = name;
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('chatScreen').style.display = 'block';
-      document.getElementById('msgInput').focus();
-    }
-
-    // إرسال رسالة
-    function sendMessage() {
-      const input = document.getElementById('msgInput');
-      const text = input.value.trim();
-      if (!text) return;
-      socket.emit('chat message', { user: myUsername, text, timestamp: new Date().toISOString() });
-      input.value = '';
-    }
-
-    // رفع صورة
-    async function uploadImage() {
-      const file = document.getElementById('imgInput').files[0];
-      if (!file) return;
-      const formData = new FormData();
-      formData.append('image', file);
-      try {
-        const res = await fetch('/upload', { method: 'POST', body: formData });
-        const data = await res.json();
-        socket.emit('chat message', { user: myUsername, image: data.url, timestamp: new Date().toISOString() });
-      } catch (err) { console.error('فشل رفع الصورة', err); }
-    }
-
-    // كتابة...
-    document.getElementById('msgInput').addEventListener('input', () => {
-      socket.emit('typing', myUsername);
-    });
-
-    // تنسيق الوقت مثل واتساب
-    function formatTime(iso) {
-      const d = new Date(iso);
-      return d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: true });
-    }
-
-    // عرض الرسالة
-    function appendMessage(data) {
-      const isMe = data.user === myUsername;
-      const div = document.createElement('div');
-      div.className = `msg ${isMe ? 'me' : 'other'}`;
-      let content = '';
-      if (data.text) content += `<div class="msg-text">${data.text}</div>`;
-      if (data.image) content += `<img src="${data.image}" onclick="window.open(this.src)">`;
-      content += `<div class="msg-time">${formatTime(data.timestamp)}</div>`;
-      div.innerHTML = content;
-      document.getElementById('messages').appendChild(div);
-      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-    }
-
-    // أحداث Socket
-    socket.on('chat history', msgs => msgs.forEach(appendMessage));
-    socket.on('chat message', appendMessage);
-    socket.on('typing', user => {
-      document.getElementById('typing').textContent = `${user} يكتب...`;
-      setTimeout(() => document.getElementById('typing').textContent = '', 3000);
-    });
-    socket.on('user-connected', id => { if (id !== socket.id && !peerId) peerId = id; });
-    socket.on('user-disconnected', id => { if (id === peerId) { peerId = null; endCallUI(); } });
-
-    // استقبال مكالمة
-    socket.on('incoming-call', data => {
-      if (confirm(`📞 مكالمة ${data.type === 'video' ? 'فيديو' : 'صوتية'} من ${data.from}\nهل تقبل؟`)) {
-        peerId = data.from;
-        acceptCall(data.type);
-      } else {
-        socket.emit('call-reject', { targetId: data.from });
-      }
-    });
-    socket.on('call-accepted', () => {});
-    socket.on('call-ended', () => endCallUI());
-
-    // WebRTC Signaling
-    socket.on('webrtc-offer', async sdp => {
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      socket.emit('webrtc-answer', { targetId: peerId, sdp: answer });
-    });
-    socket.on('webrtc-answer', sdp => peerConnection.setRemoteDescription(new RTCSessionDescription(sdp)));
-    socket.on('webrtc-ice', candidate => peerConnection?.addIceCandidate(new RTCIceCandidate(candidate)));
-
-    // بدء المكالمة
-    async function startCall(type) {
-      if (!peerId) return alert('لا يوجد مستخدم آخر متصل حالياً');
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === 'video' });
-        document.getElementById('localVideo').srcObject = localStream;
-        document.getElementById('callUI').style.display = 'flex';
-
-        peerConnection = new RTCPeerConnection(rtcConfig);
-        localStream.getTracks().forEach(t => peerConnection.addTrack(t));
-        peerConnection.ontrack = e => document.getElementById('remoteVideo').srcObject = e.streams[0];
-        peerConnection.onicecandidate = e => {
-          if (e.candidate) socket.emit('webrtc-ice', { targetId: peerId, candidate: e.candidate });
-        };
-
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        socket.emit('webrtc-offer', { targetId: peerId, sdp: offer });
-        socket.emit('call-request', { targetId: peerId, type });
-      } catch (err) { console.error('فشل بدء المكالمة:', err); }
-    }
-
-    // قبول المكالمة
-    async function acceptCall(type) {
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === 'video' });
-        document.getElementById('localVideo').srcObject = localStream;
-        document.getElementById('callUI').style.display = 'flex';
-
-        peerConnection = new RTCPeerConnection(rtcConfig);
-        localStream.getTracks().forEach(t => peerConnection.addTrack(t));
-        peerConnection.ontrack = e => document.getElementById('remoteVideo').srcObject = e.streams[0];
-        peerConnection.onicecandidate = e => {
-          if (e.candidate) socket.emit('webrtc-ice', { targetId: peerId, candidate: e.candidate });
-        };
-        socket.emit('call-accept', { targetId: peerId });
-      } catch (err) { console.error('فشل قبول المكالمة:', err); }
-    }
-
-    // إنهاء المكالمة
-    function endCall() {
-      if (peerConnection) peerConnection.close();
-      if (localStream) localStream.getTracks().forEach(t => t.stop());
-      document.getElementById('callUI').style.display = 'none';
-      socket.emit('call-end', { targetId: peerId });
-      peerConnection = null; localStream = null;
-    }
-    function endCallUI() {
-      if (peerConnection) peerConnection.close();
-      if (localStream) localStream.getTracks().forEach(t => t.stop());
-      document.getElementById('callUI').style.display = 'none';
-      peerConnection = null; localStream = null;
-    }
-
-    // PWA Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
+      navigator.serviceWorker.register('sw.js').catch(() => {});
     }
   </script>
 </body>
